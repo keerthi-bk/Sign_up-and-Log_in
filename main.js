@@ -1,64 +1,54 @@
-var fs = require('fs');
-//var data =[];
-var un;
-var data = (JSON.parse(fs.readFileSync('data.txt')));
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var path = require('path');
-//var session =  require("express-session");
+var mysql=require("mysql");
+app.use(bodyParser.urlencoded({ extended: true })); 
+var connect_1=mysql.createConnection({
+  host:'localhost',
+  user:'root',
+  password:'password',
+  database:'employe' ,
+  port:"3306" 
+})
+connect_1.connect(function(error){
+    if(error){
+        console.log("Failed to connect..");
+    }else{
+        console.log("Datebase connected..");
+    }
+})
 app.get('/', function(req, res) {
 	res.sendFile(path.join(__dirname + '/login.html'));
 });
-app.use(bodyParser.urlencoded({ extended: true })); 
 app.post('/auth', function(req, res) {
 	var username = req.body.username;
     var password = req.body.password;
-    var flag = 0;
-    if(username && password){
-        for(var i in data){
-        if(username === data[i].username && password === data[i].password){
-          flag = 1;
-          un = username;
-         break;
+    connect_1.query("SELECT * FROM em_tb WHERE email='"+username+"';",function(err,result,fields){
+         if(err){
+             console.log("userName alredy exits..");
+        }else{
+         }
         }
-        else{
-        flag = 0;
-        }
-        }
-    if (flag)  {
-    res.redirect('/home');}
-    else{
-        res.send('Incorrect Id or Password');
-    }
-    res.end();
-    }else {
-		res.send("Please enter Username and Password!");
-		res.end();
-    }
+        )
+    res.sendFile(__dirname + '/signup.html');
 });
-app.set('view engine','ejs');
-app.get('/home',function(req, res){
- var username = un;
-res.render( 'home',{username});
-});
+
 app.get('/signup',function(req, res){
     res.sendFile(path.join(__dirname + '/signup.html'))
 });
 app.post('/valid',function(req, res){
-var obj ={
-    username : req.body.email,
-    password : req.body.psw
-};
-data.push(obj);
-fs.writeFile(__dirname+'/data.txt', JSON.stringify(data), 'utf8', function (err) {
-    if (err) {
-        console.log("Error");
-        return console.log(err);
-    }
- 
-    console.log("User has been added");
+    var username = req.body.email;
+    var password = req.body.psw;
+    connect_1.query("INSERT INTO em_tb VALUES (+'"+username+"','"+password+"')",function(err,result,fields){
+         if(err){
+             console.log("userName alredy exits..");
+        }
+        }
+    )
+    console.log();  
     res.redirect('/');
 });
+app.listen(8000, function(){
+    console.log("Server Up and Running....");
 });
-app.listen(80);
